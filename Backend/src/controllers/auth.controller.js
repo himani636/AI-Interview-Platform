@@ -2,10 +2,6 @@ const userModel = require("../models/user.model")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const tokenBlacklistModel = require("../models/blacklist.model")
-const userModel = require("../models/user.model")
-const bcrypt = require("bcryptjs")
-const jwt = require("jsonwebtoken")
-const tokenBlacklistModel = require("../models/blacklist.model")
 
 
 function generateToken(user){
@@ -70,7 +66,7 @@ async function registerUserController(req, res){
 
         res.cookie("token",token,{
             httpOnly:true,
-            secure:false,
+            secure:true,
             sameSite:"strict",
             maxAge:24*60*60*1000
         })
@@ -149,7 +145,7 @@ async function loginUserController(req,res){
 
         res.cookie("token",token,{
             httpOnly:true,
-            secure:false,
+            secure:true,
             sameSite:"strict",
             maxAge:24*60*60*1000
         })

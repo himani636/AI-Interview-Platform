@@ -7,7 +7,7 @@ const app = express()
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin: "https://ai-interview-platform-eta-eosin.vercel.app",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true
 }))
 /* require all the routes here */

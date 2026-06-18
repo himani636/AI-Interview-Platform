@@ -15,7 +15,13 @@ const Home = () => {
     const navigate = useNavigate()
 
     const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[ 0 ]
+        const resumeFile = resumeInputRef.current?.files[0]
+
+        if (!resumeFile && (!selfDescription || !selfDescription.trim())) {
+            alert("Please provide a resume file or a self description before generating a report.")
+            return
+        }
+
         const data = await generateReport({ jobDescription, selfDescription, resumeFile })
         if (!data) {
             return

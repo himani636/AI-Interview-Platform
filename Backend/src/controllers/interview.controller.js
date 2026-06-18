@@ -11,19 +11,43 @@ async function extractResumeText(req) {
         const mimetype = req.file.mimetype || ""
 
         if (mimetype === "application/pdf") {
-            const pdfData = await pdfParse(req.file.buffer)
-            return pdfData.text
+            try {
+                const pdfData = await pdfParse(req.file.buffer)
+                if (!pdfData.text || pdfData.text.trim().length === 0) {
+                    throw new Error("PDF appears to be empty or could not be parsed.")
+                }
+                return pdfData.text
+            } catch (pdfError) {
+                console.error("PDF parsing error:", pdfError.message);
+                if (selfDescription && selfDescription.trim().length > 0) {
+                    console.log("Falling back to self description due to PDF parsing error");
+                    return selfDescription;
+                }
+                throw new Error(`Invalid or corrupted PDF file: ${pdfError.message}. Please provide a valid PDF or enter a self description.`);
+            }
         }
 
         if (mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-            const result = await mammoth.extractRawText({ buffer: req.file.buffer })
-            return result.value
+            try {
+                const result = await mammoth.extractRawText({ buffer: req.file.buffer })
+                if (!result.value || result.value.trim().length === 0) {
+                    throw new Error("DOCX file appears to be empty or could not be parsed.")
+                }
+                return result.value
+            } catch (docxError) {
+                console.error("DOCX parsing error:", docxError.message);
+                if (selfDescription && selfDescription.trim().length > 0) {
+                    console.log("Falling back to self description due to DOCX parsing error");
+                    return selfDescription;
+                }
+                throw new Error(`Invalid or corrupted DOCX file: ${docxError.message}. Please provide a valid DOCX or enter a self description.`);
+            }
         }
 
         throw new Error("Unsupported resume file type. Please upload a PDF or DOCX file.")
     }
 
-    if (selfDescription) {
+    if (selfDescription && selfDescription.trim().length > 0) {
         return selfDescription
     }
 

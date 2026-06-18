@@ -6,8 +6,14 @@ const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
+const frontendOrigins = (process.env.FRONTEND_URL || "http://localhost:5173").split(",").map(o => o.trim())
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true)
+        if (frontendOrigins.indexOf(origin) !== -1) return callback(null, true)
+        return callback(new Error('Not allowed by CORS'))
+    },
     credentials: true
 }))
 /* require all the routes here */

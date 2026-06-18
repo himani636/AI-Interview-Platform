@@ -103,7 +103,12 @@ Job Description:
 ${jobDescription}
 `;
     try {
+        if (!process.env.GOOGLE_GENAI_API_KEY) {
+            throw new Error("GOOGLE_GENAI_API_KEY environment variable is not set. Please set it on your hosting platform.");
+        }
+
         console.log("Calling Gemini API for interview report generation...");
+        const timeoutMs = 120000; // 120 seconds
         
         const response = await Promise.race([
             ai.models.generateContent({
@@ -115,7 +120,7 @@ ${jobDescription}
                 }
             }),
             new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Gemini API request timeout after 60s")), 60000)
+                setTimeout(() => reject(new Error(`Gemini API request timeout after ${timeoutMs / 1000}s`)), timeoutMs)
             )
         ])
         
@@ -167,7 +172,12 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                     `
 
     try {
+        if (!process.env.GOOGLE_GENAI_API_KEY) {
+            throw new Error("GOOGLE_GENAI_API_KEY environment variable is not set. Please set it on your hosting platform.");
+        }
+
         console.log("Calling Gemini API for resume PDF generation...");
+        const timeoutMs = 120000; // 120 seconds
         
         const response = await Promise.race([
             ai.models.generateContent({
@@ -179,7 +189,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                 }
             }),
             new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Gemini API request timeout after 60s")), 60000)
+                setTimeout(() => reject(new Error(`Gemini API request timeout after ${timeoutMs / 1000}s`)), timeoutMs)
             )
         ])
 

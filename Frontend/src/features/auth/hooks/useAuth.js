@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { AuthContext } from "../auth.context";
-import { login, register, logout } from "../services/interview.api";
+import { login, register, logout } from "../services/auth.api";
 
 
 export const useAuth = () => {

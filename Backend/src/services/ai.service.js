@@ -2,6 +2,11 @@ const { GoogleGenAI } = require("@google/genai")
 const {z } = require("zod")
 const {zodToJsonSchema} = require("zod-to-json-schema")
 const puppeteer = require("puppeteer")
+
+if (!process.env.GOOGLE_GENAI_API_KEY) {
+    console.warn("WARNING: GOOGLE_GENAI_API_KEY is not set. AI features will not work.")
+}
+
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
@@ -97,19 +102,29 @@ ${selfDescription}
 Job Description:
 ${jobDescription}
 `;
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(interviewReportSchema),
-        }
-    })
-    
-console.log(response.text);
-    return JSON.parse(response.text)
-
-
+    try {
+        console.log("Calling Gemini API for interview report generation...");
+        
+        const response = await Promise.race([
+            ai.models.generateContent({
+                model: "gemini-3-flash-preview",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: zodToJsonSchema(interviewReportSchema),
+                }
+            }),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Gemini API request timeout after 60s")), 60000)
+            )
+        ])
+        
+        console.log("Gemini API response received");
+        return JSON.parse(response.text)
+    } catch (error) {
+        console.error("Error generating interview report:", error.message || error);
+        throw new Error(`Failed to generate interview report: ${error.message || "Unknown error"}`)
+    }
 }
 
 
@@ -151,23 +166,33 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                         The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
                     `
 
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(resumePdfSchema),
-        }
-    })
+    try {
+        console.log("Calling Gemini API for resume PDF generation...");
+        
+        const response = await Promise.race([
+            ai.models.generateContent({
+                model: "gemini-3-flash-preview",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: zodToJsonSchema(resumePdfSchema),
+                }
+            }),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Gemini API request timeout after 60s")), 60000)
+            )
+        ])
 
-
-    const jsonContent = JSON.parse(response.text)
-
-    const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
-
-    return pdfBuffer
-
+        console.log("Gemini API response received for resume PDF");
+        const jsonContent = JSON.parse(response.text)
+        const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
+        return pdfBuffer
+    } catch (error) {
+        console.error("Error generating resume PDF:", error.message || error);
+        throw new Error(`Failed to generate resume PDF: ${error.message || "Unknown error"}`)
+    }
 }
+
 module.exports = {
   generateInterviewReport, generateResumePdf
 }
